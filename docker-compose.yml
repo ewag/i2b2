@@ -1,0 +1,63 @@
+version: '3.9'
+
+secrets:
+  POSTGRES_PASSWORD:
+    file: ./secrets/POSTGRES_PASSWORD.txt
+  DB_ADMIN_PASS:
+    file: ./secrets/DB_ADMIN_PASS.txt
+  DB_USER_PASS:
+    file: ./secrets/DB_USER_PASS.txt
+  ENV_MULTILOAD:
+    file: ./secrets/ENV_MULTILOAD.txt
+
+volumes:
+  i2b2-db:
+
+services:
+  i2b2-web:
+    container_name: i2b2-web
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        WEB_TAG: ${WEB_TAG}
+    env_file:
+    - .env
+    ports:
+      - 80:80
+      - 443:443
+    command: /run-httpd.sh ${WEB_FQDN}
+    depends_on:
+      - i2b2-wildfly
+
+  i2b2-wildfly:
+    container_name: i2b2-wildfly
+    build:
+      context: ./wildfly
+      dockerfile: Dockerfile
+      args:
+        WILDFLY_TAG: ${WILDFLY_TAG}
+    env_file:
+    - .env
+    depends_on:
+      i2b2-database:
+        condition: service_healthy
+    secrets:
+      - DB_ADMIN_PASS
+      - DB_USER_PASS
+      - ENV_MULTILOAD
+
+  i2b2-database:
+    container_name: i2b2-database
+    build:
+      context: ./database
+      dockerfile: Dockerfile.postgres
+    volumes:
+      - i2b2-db:/var/lib/postgresql/data
+    env_file:
+    - .env
+    secrets:
+      - DB_ADMIN_PASS
+      - DB_USER_PASS
+      - POSTGRES_PASSWORD
+      - ENV_MULTILOAD
