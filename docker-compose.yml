@@ -47,6 +47,17 @@ services:
       - DB_USER_PASS
       - ENV_MULTILOAD
 
+  i2b2-api:
+    container_name: i2b2-api
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    env_file:
+    - .env
+    depends_on:
+      i2b2-database:
+        condition: service_healthy
+
   i2b2-database:
     container_name: i2b2-database
     build:

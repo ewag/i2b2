@@ -120,3 +120,6 @@ mv <dir_name>_<BAK_INFO>.tar.gz.enc <dir_name>_restore.tar.gz.enc
 openssl enc -aes-256-cbc -d -in <dir_name>_restore.tar.gz.enc | tar xvzf <target_dir_name>
 ```
 This will restore the archive data to the volume location (target_dir_name) - this is uaually best done while the container is stopped. Then the container can be restarted.
+
+# REST API
+We are introducing a REST API to provide automisable access to certain features. This complements the i2b2 product but is not required.

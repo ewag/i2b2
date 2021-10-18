@@ -10,5 +10,7 @@ RUN cd /var/www/html/ && \
     sed -i -e 's*{ code: "ONT"   },*//{ code: "ONT"   },*g' -e 's*{ code: "CRC"   },*//{ code: "CRC"   },*g' -e 's*{ code: "WORK"   },*//{ code: "WORK"   },*g' admin/js-i2b2/i2b2_loader.js
 
 COPY ./bootstrap-web.sh ./bootstrap.sh
+COPY ./conf ./conf
+
 ## Override entrypoint for custom initialisation...
 ENTRYPOINT ["/docker-entrypoint/bootstrap.sh"]
