@@ -1,6 +1,7 @@
 ARG WEB_TAG
 FROM i2b2/i2b2-web:${WEB_TAG}
 
+ENV TZ=Europe/Berlin
 WORKDIR /docker-entrypoint
 ## Run some generic fixes
 RUN cd /var/www/html/ && \
@@ -11,6 +12,9 @@ RUN cd /var/www/html/ && \
 
 COPY ./bootstrap-web.sh ./bootstrap.sh
 COPY ./conf ./conf
+COPY ./favicon.ico /var/www/html/
 
 ## Override entrypoint for custom initialisation...
 ENTRYPOINT ["/docker-entrypoint/bootstrap.sh"]
+## From upstream...
+CMD ["/run-httpd.sh"]

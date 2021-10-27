@@ -1,18 +1,31 @@
 
+# Introduction
+
+[i2b2](https://www.i2b2.org/) is a community maintained project designed for "Informatics for Integrating Biology and the Bedside"
+
+They provide the software capability, this project is to ease deployment. We aim to provide a complete Data Warehouse solution for the medical informatics domain, so we have tailored the deployment to work with our https proxy - see our [parent github page](https://github.com/dzl-dm/). There are only minimal differences if you would prefer to deploy i2b2 in a different environment, so this project could still be useful to you.
+
+# Pre-requisites
+We are assuming a clean, linux based environment with docker already installed and available.
+
+Additionally, these instructions assume our proxy is in use. You may need to tweak settings if using a different environment.
+
 # Basic usage
-The first step is to clone the git repo with the setup information:
-git clone #### TODO:
-> _NOTE:_ This can be limited to only the `docker-compose.yml` and `.env` files if you prefer to keep it small. The other files in the repo are only required for building the images, which is done for us by github.
+The first step is to copy the essential files from our repo as templates, these will then be edited for you environment - you may do this on your desktop then copy over to the deployment system
+```sh
+wget https://raw.githubusercontent.com/dzl-dm/i2b2/master/docker-compose.yml
+wget https://raw.githubusercontent.com/dzl-dm/i2b2/master/.env
+```
+> _NOTE:_ If you prefer to build the images yourself (or edit the way they are built), you shoud clone our whole repo: `git clone https://github.com/dzl-dm/i2b2.git`
 
-Then we recommend making a few small adjustments to the settings and providing some "secrets". Secrets are a term docker uses for private configuration values. The way they are stored and used provides separation from regular environment variables.
+In order to deploy properly, you must create some "secrets". Secrets are a term docker uses for private configuration values. The way they are stored and used provides separation from regular environment variables.
 
-## Adjust your .env
-The directory has a `.env` file which is used by docker to put environment variables into the containers. It also allows the `docker compose` process to use them which can aid deployments. The .env provided covers a range of variables i2b2 can use, most of which will not need changing. For setting up on a remote server, the relevant fields should be changed.
+We also recommend making a few small adjustments to the settings.
 
 ## Create your secrets
-The `secrets/` directory holds plain text files with sensitive information, usually passwords, which i2b2 uses. In our setup, these are loaded as env variables at container runtime, in a more protected way than simply providing them docker as env vars. These are either referenced from the `.env` file by variables ending "_FILE" or as additional file called `ENV_MULTILOAD.txt` which is sourced by the container at runtime. For obvious reasons, this is not provided in the repository, you must create this yourself. eg:
+The `secrets/` directory holds plain text files with sensitive information, usually passwords, which i2b2 uses. In our setup, these are loaded as env variables at container runtime, in a more protected way than simply providing them docker as env vars. These are either referenced via the `.env` file by variables ending "_FILE" or as an additional file called `ENV_MULTILOAD.txt` which is sourced by the container at runtime. For obvious reasons, this is not provided in the repository, you must create this yourself. eg:
 ```sh
-mkdir secrets; cd secrets; touch DB_ADMIN_PASS.txt DB_USER_PASS.txt POSTGRES_PASSWORD.txt ENV_MULTILOAD.txt; cd ..
+mkdir secrets; cd secrets; touch DB_ADMIN_PASS.txt DB_USER_PASS.txt POSTGRES_PASSWORD.txt ENV_MULTILOAD.txt; cd -
 ```
 Then add information as described above, where the files referenced by `.env` should be individual passwords, eg `DB_ADMIN_PASS.txt`:
 ```txt
@@ -25,6 +38,9 @@ export DS_PM_PASS=pm-pass
 export DS_WD_PASS=wd-pass
 ...
 ```
+
+## Adjust your .env
+The directory has a `.env` file which is used by docker to put environment variables into the containers. It also allows the `docker compose` process to use them which can aid deployments. The .env provided covers a range of variables i2b2 can use, most of which will not need changing. For setting up on a remote server, the relevant fields should be changed.
 
 ## Deploy containers
 Once all the settings are done, you can deploy the containers to your system. This follows regular docker commands so no special setup should be needed. From the base directory of the project (where you have the `docker-compose.yml` file), run the following:
@@ -54,7 +70,7 @@ Only the "NewInstall" section is included and located (within the database conta
 
 Using the `INCLUDE_DEMO_DATA=True` setting in the `.env` file, the demo data parts of this will automatically be installed, but the data can be accessed and run manually at any time after the containers and database structure have already been created.
 
-> _NOTE:_ This process is currently not fully operational, the demo data is not loaded cleanly and is not accessible using the interface
+> _NOTE:_ This process is not fully tested and may require some additional work
 
 # Custom breakdowns
 This is an i2b2 concern, so we won't repeat their information here, but rather link to the [relevant documentation](https://community.i2b2.org/wiki/display/RM/1.7.10+Release+Notes#id-1.7.10ReleaseNotes-SQLQueryBreakdowns) from i2b2.
@@ -65,7 +81,7 @@ It is likely you will want to copy a file into the container at some point, for 
 docker cp my-breakdown.sql i2b2-database:/tmp/
 ```
 
-> _NOTE:_ Depending in your environment, allowing remote access directly to the database could be a nicer option. You would need to tell docker to expose the database ports. Follow the structure of "ports:" in the "i2b2-web" section of `docker-compose.yml`
+> _NOTE:_ Depending in your environment, allowing remote access directly to the database could be a nicer option. You would need to tell docker to expose the database ports. Follow the structure of "ports:" in the "i2b2-web" section of `docker-compose.yml`. You should allow port 5432 in the i2b2-database service section
 
 # Docker volumes
 Docker uses "volumes" when persistant data should be stored, eg in the case of databases. This is essentially a directory on the host filesystem which is mounted as part of the container filesystem, meaning container re-creation does not affect the data.
@@ -122,4 +138,4 @@ openssl enc -aes-256-cbc -d -in <dir_name>_restore.tar.gz.enc | tar xvzf <target
 This will restore the archive data to the volume location (target_dir_name) - this is uaually best done while the container is stopped. Then the container can be restarted.
 
 # REST API
-We are introducing a REST API to provide automisable access to certain features. This complements the i2b2 product but is not required.
+We are introducing a REST API to provide programmable access to certain features. This complements the i2b2 product but is not required. It is currently a work in progress.

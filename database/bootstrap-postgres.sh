@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-## Import the secrets as env vars
+## Import the secrets as env vars and check database status, then call upstream docker-entrypoint.sh
 
 set -e
 
@@ -45,7 +45,7 @@ done < <(env | grep '_FILE=')
 echo -e "...complete"
 
 ## Run check-db script in the background.
-## It will wait for the database to start, check for i2b2 and run the init-database script if needed
+## It will wait for the database to start, check for a database named "i2b2" and run the init-database script if needed
 /bin/bash -c '/docker-entrypoint/check-db.sh' &
 
 ## Now call the original/upstream entrypoint and append arguments

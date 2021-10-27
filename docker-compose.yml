@@ -13,6 +13,14 @@ secrets:
 volumes:
   i2b2-db:
 
+networks:
+  ## If using a proxy, you should use an additional docker network "common-proxy" for them to communicate
+  common-proxy:
+    external: true
+  backend:
+    external: false
+
+
 services:
   i2b2-web:
     container_name: i2b2-web
@@ -22,11 +30,13 @@ services:
       args:
         WEB_TAG: ${WEB_TAG}
     env_file:
-    - .env
-    ports:
-      - 80:80
-      - 443:443
-    command: /run-httpd.sh ${WEB_FQDN}
+      - .env
+    networks:
+      - backend
+      - common-proxy
+    ## If using a proxy, you should not expose ports, the proxy will do this
+    # ports:
+    #   - 80:80
     depends_on:
       - i2b2-wildfly
 
@@ -39,6 +49,8 @@ services:
         WILDFLY_TAG: ${WILDFLY_TAG}
     env_file:
     - .env
+    networks:
+      - backend
     depends_on:
       i2b2-database:
         condition: service_healthy
@@ -54,6 +66,8 @@ services:
       dockerfile: Dockerfile
     env_file:
     - .env
+    networks:
+      - backend
     depends_on:
       i2b2-database:
         condition: service_healthy
@@ -67,6 +81,8 @@ services:
       - i2b2-db:/var/lib/postgresql/data
     env_file:
     - .env
+    networks:
+      - backend
     secrets:
       - DB_ADMIN_PASS
       - DB_USER_PASS
