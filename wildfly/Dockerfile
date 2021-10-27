@@ -1,4 +1,4 @@
-ARG WILDFLY_TAG
+ARG WILDFLY_TAG=${WILDFLY_TAG:-'release-v1.7.12a.0002'}
 FROM i2b2/i2b2-wildfly:${WILDFLY_TAG}
 
 ENV TZ=Europe/Berlin

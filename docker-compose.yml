@@ -1,4 +1,4 @@
-version: '3.9'
+version: '3'
 
 secrets:
   POSTGRES_PASSWORD:
@@ -14,9 +14,9 @@ volumes:
   i2b2-db:
 
 networks:
-  ## If using a proxy, you should use an additional docker network "common-proxy" for them to communicate
-  common-proxy:
-    external: true
+  ## If using our proxy, you should use an additional docker network "common-proxy" for them to communicate (see also the commented line in i2b2-web service)
+  # common-proxy:
+  #   external: true
   backend:
     external: false
 
@@ -24,29 +24,31 @@ networks:
 services:
   i2b2-web:
     container_name: i2b2-web
-    build:
-      context: ./web
-      dockerfile: Dockerfile
-      args:
-        WEB_TAG: ${WEB_TAG}
+    image: ${IMAGE_NAMESPACE}/i2b2/i2b2-web
+    # build:
+    #   context: ./web
+    #   dockerfile: Dockerfile
+    #   args:
+    #     WEB_TAG: ${WEB_TAG}
     env_file:
       - .env
     networks:
       - backend
-      - common-proxy
+      # - common-proxy
     ## If using a proxy, you should not expose ports, the proxy will do this
-    # ports:
-    #   - 80:80
+    ports:
+      - 80:80
     depends_on:
       - i2b2-wildfly
 
   i2b2-wildfly:
     container_name: i2b2-wildfly
-    build:
-      context: ./wildfly
-      dockerfile: Dockerfile
-      args:
-        WILDFLY_TAG: ${WILDFLY_TAG}
+    image: ${IMAGE_NAMESPACE}/i2b2/i2b2-wildfly
+    # build:
+    #   context: ./wildfly
+    #   dockerfile: Dockerfile
+    #   args:
+    #     WILDFLY_TAG: ${WILDFLY_TAG}
     env_file:
     - .env
     networks:
@@ -61,9 +63,10 @@ services:
 
   i2b2-api:
     container_name: i2b2-api
-    build:
-      context: ./api
-      dockerfile: Dockerfile
+    image: ${IMAGE_NAMESPACE}/i2b2/i2b2-api
+    # build:
+    #   context: ./api
+    #   dockerfile: Dockerfile
     env_file:
     - .env
     networks:
@@ -74,9 +77,10 @@ services:
 
   i2b2-database:
     container_name: i2b2-database
-    build:
-      context: ./database
-      dockerfile: Dockerfile.postgres
+    image: ${IMAGE_NAMESPACE}/i2b2/i2b2-database
+    # build:
+    #   context: ./database
+    #   dockerfile: Dockerfile.postgres
     volumes:
       - i2b2-db:/var/lib/postgresql/data
     env_file:

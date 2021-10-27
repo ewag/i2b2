@@ -1,4 +1,4 @@
-ARG WEB_TAG
+ARG WEB_TAG=${WEB_TAG:-'release-v1.7.12a.0002'}
 FROM i2b2/i2b2-web:${WEB_TAG}
 
 ENV TZ=Europe/Berlin
