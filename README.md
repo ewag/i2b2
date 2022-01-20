@@ -8,21 +8,45 @@ They provide the software capability, this project is to ease deployment. The de
 We aim to provide a complete Data Warehouse solution for the medical informatics domain, so we also provide notes on how to deploy with our [dwh-https-proxy](https://github.com/dzl-dm/dwh-https-proxy) - see also our [parent github page](https://github.com/dzl-dm/). This i2b2 system can also be deployed in different environments.
 
 # Pre-requisites
-We are assuming a clean, linux based (git-bash and other windows based mechanisms should also work) environment with docker already installed and available to the user you are logged in as.
+We are assuming a clean, linux-based environment (git-bash and other windows based mechanisms should also work) with docker already installed and available to the user you are logged in as.
+Tested docker version: 20.10.11
 
 # Basic usage
-The first step is to copy the essential files from our repo as templates, these will then be edited for you environment (you mayprefer to do prepare everything on your desktop then copy over to the deployment system)
+We provide two options for deployment:
+* [Streamlined deployment](#streamlined-deployment) - Which is a purely environment variable based configuration mechanism. This includes setting and passing passwords as envoronment variables from your host to the docker containers
+*  [Advanced 'secret' deployment](#advanced-secret-deployment-alternative) - Which has some security benefits so the secrets cannot be seen from the docker host system. The environment based system still does not expose passwords outside of your server environment, unless you have explicitly configured it to do so.
+
+## Streamlined deployment
+The first step is to copy the essential files from our repo as templates, these will then be edited for you environment (you may prefer to prepare everything on your desktop then copy over to the deployment system)
 ```sh
 wget https://raw.githubusercontent.com/dzl-dm/i2b2/master/docker-compose.yml
 wget https://raw.githubusercontent.com/dzl-dm/i2b2/master/.env
+wget https://raw.githubusercontent.com/dzl-dm/i2b2/master/.env-secrets
 ```
 > _NOTE:_ If you prefer to build the images yourself (or edit the way they are built), you shoud clone our whole repo: `git clone https://github.com/dzl-dm/i2b2.git`
+
+Out of the box, this should deploy a functional installation of i2b2, simply by running this in the directory with your `docker-compose.yml` and `.env*` files:
+```sh
+docker-compose up -d
+```
+
+We strongly recommend changing the passwords stored in `.env-secrets` before deployment. Additionally, you must [change the user passwords](#change-default-passwords) once the application is running 
+
+## Advanced 'secret' deployment (alternative)
+The first step is to copy the essential files from our repo as templates, these will then be edited for you environment (you may prefer to prepare everything on your desktop then copy over to the deployment system)
+```sh
+wget https://raw.githubusercontent.com/dzl-dm/i2b2/master/docker-compose_use-with-secrets.yml ./docker-compose.yml
+wget https://raw.githubusercontent.com/dzl-dm/i2b2/master/.env_use-with-secrets ./.env
+```
+> _NOTE:_ If you prefer to build the images yourself (or edit the way they are built), you shoud clone our whole repo: `git clone https://github.com/dzl-dm/i2b2.git`
+
+We simply reference file based secrets for our sample, though docker allows more advanced solutions using password management systems. That is out of scope for this document.
 
 In order to deploy properly, you must create some "secrets". Secrets are a term docker uses for private configuration values. The way they are stored and used provides separation from regular environment variables.
 
 We also recommend making a few small adjustments to the settings.
 
-## Create your secrets
+### Create your secrets
 The `secrets/` directory holds plain text files with sensitive information, usually passwords, which i2b2 uses. In our setup, these are loaded as env variables at container runtime in a more protected way than simply providing them docker as env vars. These are either referenced via the `.env` file by variables ending "_FILE" or as an additional file called `ENV_MULTILOAD.txt` which is sourced by the container at runtime. For obvious reasons, this is not provided in the repository, you must create this yourself. eg:
 ```sh
 mkdir secrets; cd secrets; touch DB_ADMIN_PASS.txt DB_USER_PASS.txt POSTGRES_PASSWORD.txt ENV_MULTILOAD.txt; cd -
