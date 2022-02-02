@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-## Import the secrets as env vars
+## Import the secrets as env vars - when not using secrets, this is not run
 file_env() {
   local var="$1"
   local fileVar="${var}_FILE"
