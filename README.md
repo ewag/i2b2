@@ -23,7 +23,7 @@ wget https://raw.githubusercontent.com/dzl-dm/i2b2/master/docker-compose.yml
 wget https://raw.githubusercontent.com/dzl-dm/i2b2/master/.env
 wget https://raw.githubusercontent.com/dzl-dm/i2b2/master/.env-secrets
 ```
-> _NOTE:_ If you prefer to build the images yourself (or edit the way they are built), you shoud clone our whole repo: `git clone https://github.com/dzl-dm/i2b2.git`
+> _NOTE:_ If you prefer to build the images yourself (or edit the way they are built), you could clone our whole repo: `git clone https://github.com/dzl-dm/i2b2.git`
 
 Out of the box, this should deploy a functional installation of i2b2, simply by running this in the directory with your `docker-compose.yml` and `.env*` files:
 ```sh
