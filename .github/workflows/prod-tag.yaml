@@ -104,15 +104,15 @@ jobs:
           tags: |
             v${{ steps.prep.outputs.version }}
             latest
-      # - name: Add git Version tag to meta Docker Image
-      #   uses: shrink/actions-docker-registry-tag@v1
-      #   with:
-      #     registry: '${{ env.REGISTRY }}'
-      #     token: "${{ env.token }}"
-      #     repository: '${{ github.repository }}/${{ github.event.repository.name }}-meta'
-      #     ## NOTE: Alternate package tag/reference while we don't want this full build code committed to master
-      #     # target: 'sha-${{ github.sha }}'
-      #     target: 'build-latest'
-      #     tags: |
-      #       v${{ steps.prep.outputs.version }}
-      #       latest
+      - name: Add git Version tag to meta Docker Image
+        uses: shrink/actions-docker-registry-tag@v1
+        with:
+          registry: '${{ env.REGISTRY }}'
+          token: "${{ env.token }}"
+          repository: '${{ github.repository }}/${{ github.event.repository.name }}-meta'
+          ## NOTE: Alternate package tag/reference while we don't want this full build code committed to master
+          # target: 'sha-${{ github.sha }}'
+          target: 'build-latest'
+          tags: |
+            v${{ steps.prep.outputs.version }}
+            latest

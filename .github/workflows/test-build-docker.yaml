@@ -171,3 +171,30 @@ jobs:
   #           ${{ env.REGISTRY }}/${{ github.repository }}/${{ github.event.repository.name }}-${{ github.job }}:build-${{ github.run_number }}
   #           ${{ env.REGISTRY }}/${{ github.repository }}/${{ github.event.repository.name }}-${{ github.job }}:sha-${{ github.sha }}
   #         push: true
+  meta:
+    runs-on: ubuntu-latest
+    ## Only run job if commit message doesn't contain "WIP:" or "ci skip" is not triggered by dependabot
+    if: |
+      !startsWith(github.event.head_commit.message, 'WIP:') &&
+      !contains(github.event.head_commit.message, 'ci skip') &&
+      !contains(github.ref, 'dependabot')
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Login to GitHub Docker Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push docker image for ${{ github.job }}
+        uses: docker/build-push-action@v2
+        with:
+          context: ./meta-python
+          file: ./meta-python/Dockerfile
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}/${{ github.event.repository.name }}-${{ github.job }}:build-latest
+            ${{ env.REGISTRY }}/${{ github.repository }}/${{ github.event.repository.name }}-${{ github.job }}:build-${{ github.run_number }}
+            ${{ env.REGISTRY }}/${{ github.repository }}/${{ github.event.repository.name }}-${{ github.job }}:sha-${{ github.sha }}
+          push: true

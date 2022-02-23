@@ -1,0 +1,11 @@
+Flask
+# Flask-Migrate
+Flask-SQLAlchemy
+# Jinja2
+# pycurl
+psycopg2-binary
+pyyaml
+rdflib
+requests
+sparqlwrapper
+# SQLAlchemy

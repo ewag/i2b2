@@ -1,0 +1,58 @@
+## Project technical internal settings
+
+## Flask app context - muse be UPPER_CASE
+## SQLALCHEMY_DATABASE_URI is built from individual environment variables by default
+# SQLALCHEMY_DATABASE_URI: "postgresql+psycopg2://i2b2:ChangeMe@i2b2.database/i2b2"
+SQLALCHEMY_TRACK_MODIFICATIONS : False
+
+## Where the local/manual metadata CSV files are mounted
+## (the structure under this tree defines the source_id, then naming of file is [<source_id>.]<schema>.<table>.csv)
+local_file_sources: "/var/translator-custom-metadata"
+## This is for the temporary/intermediate csv files of data from remote sources (like fuseki)
+dynamic_metadata_directory: "/tmp/meta-translation"
+
+## Some of these could change when using custom i2b2 projects etc
+i2b2_path_prefix: "i2b2"
+i2b2_path_separator: '\'
+i2b2_multipath_container: "MULTI"
+meta_schema: "i2b2metadata"
+ontology_tablename: "i2b2"
+data_schema: "i2b2demodata"
+
+## This map can use descending precedence lists to pick a variable which isn't null/empty
+sql_col_object_property_map:
+  "c_fullname": "concept_long"
+  "c_name": ["display_label", "pref_label"]
+  "c_visualattributes": "visual_attribute"
+  "c_basecode": "notation"
+  "c_metadataxml": "datatype_xml"
+  "c_dimcode": "concept_long"
+  "c_tooltip": ["description", "pref_label", "display_label"]
+  "i2b2metadata-table_access-c_tooltip": ["display_label", "pref_label"]
+  "m_applied_path": "applied_path"
+  "download_date": "fetch_timestamp"
+  # "sourcesystem_cd": "sourcesystem"
+  "c_table_name": "ontology_tablename"
+  "concept_path": "concept_long"
+  "concept_cd": "notation"
+  "modifier_path": "concept_long"
+  "modifier_cd": "notation"
+  "name_char": "pref_label"
+
+## The column is always a specific, fixed literal for this metadata system (theoretically could change with future developments of the app)
+fixed_value_cols:
+  "c_synonym_cd": "N"
+  "c_totalnum": ""
+  "c_columndatatype": "T"
+  "c_operator": "LIKE"
+  "c_comment": ""
+  "update_date": "current_timestamp"
+  "import_date": "current_timestamp"
+  "valuetype_cd": ""
+  "m_exclusion_cd": ""
+  "c_path": ""
+  "c_symbol": ""
+  "c_dimtablename": "concept_dimension"
+  "c_protected_access": "N"
+  "c_ontology_protection": ""
+  "i2b2metadata-table_access-c_basecode": ""
