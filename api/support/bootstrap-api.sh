@@ -37,8 +37,5 @@ while read secret_env; do
 done < <(env | grep '_FILE=')
 echo -e "...complete"
 
-
 ## Now call the original/upstream entrypoint and append arguments
 echo -e "Starting api server..."
-export FLASK_APP="${API_PROD_DIR}/flask/i2b2.py"
-flask run -h 0.0.0.0 --reload

@@ -2,18 +2,23 @@ version: '3'
 
 volumes:
   i2b2-db:
+  auth:
+  letsencrypt:
 
 services:
   i2b2-proxy:
     container_name:
       i2b2.proxy
-    # image: ${IMAGE_NAMESPACE}/i2b2/i2b2-proxy:${APP_VERSION}
-    build:
-      context: ./proxy
-      dockerfile: Dockerfile
+    image: ${IMAGE_NAMESPACE}/i2b2/i2b2-proxy:${APP_VERSION}
+    # build:
+    #   context: ./proxy
+    #   dockerfile: Dockerfile
     ports:
       - 80:80
       - 443:443
+    volumes:
+      - auth:/etc/nginx/auth
+      - letsencrypt:/etc/letsencrypt
     env_file:
       - .env
     depends_on:
@@ -54,7 +59,7 @@ services:
     image: ${IMAGE_NAMESPACE}/i2b2/i2b2-database:${APP_VERSION}
     # build:
     #   context: ./database
-    #   dockerfile: Dockerfile.postgres
+    #   dockerfile: Dockerfile
     volumes:
       - i2b2-db:/var/lib/postgresql/data
     env_file:
@@ -64,15 +69,12 @@ services:
   i2b2-api:
     container_name:
       i2b2.api
-    # image: ${IMAGE_NAMESPACE}/i2b2/i2b2-api:${APP_VERSION}
-    build:
-      context: ./api
-      dockerfile: Dockerfile
+    image: ${IMAGE_NAMESPACE}/i2b2/i2b2-api:${APP_VERSION}
+    # build:
+    #   context: ./api
+    #   dockerfile: Dockerfile
     env_file:
       - .env
-    ## DEBUG command
-    # entrypoint:
-    #   tail -F nothing
     depends_on:
       - i2b2-database
 
@@ -96,8 +98,5 @@ services:
     env_file:
       - .env
       - .env-secrets
-    ## DEBUG command
-    # command:
-    #   tail -F nothing
     depends_on:
       - i2b2-database
