@@ -8,7 +8,7 @@ RUN rm -rf ./i2b2-data.tar.gz
 
 FROM postgres:12
 
-ENV TZ=Europe/Berlin
+ENV TZ=${TZ:-'Europe/Berlin'}
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt update; apt install -y sudo unzip; apt-get clean; rm -rf /var/lib/apt/lists/*
 
@@ -27,8 +27,3 @@ HEALTHCHECK --interval=15s --timeout=10s --retries=45 \
 ## Override entrypoint for custom initialisation...
 ENTRYPOINT ["/docker-entrypoint/bootstrap.sh"]
 CMD ["postgres"]
-
-## From upstream dockerfile
-## Under /usr/local/bin/
-# ENTRYPOINT ["docker-entrypoint.sh"]
-# CMD ["postgres"]
