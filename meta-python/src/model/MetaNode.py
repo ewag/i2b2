@@ -1,7 +1,6 @@
 """ meta_node.py
 Object model for a metadata node
 """
-from cmath import log
 from flask import current_app as app
 
 import logging
@@ -9,8 +8,6 @@ logger = logging.getLogger(__name__)
 
 import datetime
 from enum import Enum
-import operator
-import time
 
 class NodeType(Enum):
     """Possible types of node"""
@@ -40,7 +37,6 @@ class MetaNode(object):
     skos:prefLabel "Health questionnaire EQ-5D VAS"@en ;
     pref_labels = {"Gesundheitsfragebogen: EQ-5D VAS": "de", "Health questionnaire EQ-5D VAS": "en"}
     """
-    ## TODO: Restrict length of strings when PostgreSQL column is of limited length
 
     parent_node = None
     child_nodes:list = None
@@ -114,9 +110,15 @@ class MetaNode(object):
                 va_part1 = "R"
             else:
                 va_part1 = "L"
+        # elif self.notations and len(self.notations) > 1 and self.node_type != NodeType.MODIFIER:
+        # #     ## The i2b2 documentation implies that M should be used here, but maybe its not clear enough as it doesn't really work like that - modifiers will not be shown
+        # #     ## Using F here can work, but would be there even if there aren't any modifiers as children
+        # #     ## Using L here actually works best, that's the default with "else", so we don't need this section
+        #     va_part1 = "M"
         else:
-            va_part1 = "M"
+            va_part1 = "L"
 
+        ## TODO: dwh_display_status can be extended, initially only "i2b2hidden" is supported, but this should be more flexable
         if self.dwh_display_status and self.dwh_display_status.lower() == "i2b2hidden":
             va_part2 = "H"
         else:
@@ -186,6 +188,7 @@ class MetaNode(object):
     @datatype.setter
     def datatype(self, dtype:str):
         """Convert incoming string based indication to enum"""
+        ## TODO: Dict should be in config - ensure still uses the NodeDatatype correctly
         types = {NodeDatatype.INTEGER: ["int", "integer"], NodeDatatype.FLOAT: ["float", "dec", "decimal"], NodeDatatype.STRING: ["string", "str"], NodeDatatype.LARGESTRING: ["largestring"], NodeDatatype.PARTIAL_DATE: ["partial date", "partialDate", "partialDateRestriction"], NodeDatatype.DATE: ["dateRestriction", "date"]}
         ## Reverse the "types" dict so we can easily lookup the notations we expect to receive
         incoming_type_representations = {v.lower():k for k, l in types.items() for v in l}
@@ -216,7 +219,9 @@ class MetaNode(object):
         xml_dt = "NULL"
         if self.datatype is not None:
             xml_dt = "<ValueMetadata><Version>3.02</Version><CreationDateTime>{fetch_timestamp}</CreationDateTime><DataType>{datatype_pretty}</DataType><Oktousevalues>Y</Oktousevalues>{units_xml}</ValueMetadata>".format(
-                fetch_timestamp=self.fetch_timestamp, datatype_pretty=self.datatype_pretty, units_xml = self.units_xml
+                fetch_timestamp = self.fetch_timestamp,
+                datatype_pretty = self.datatype_pretty,
+                units_xml = self.units_xml
                 )
         return xml_dt
 
@@ -268,38 +273,11 @@ class MetaNode(object):
         elif self.parent_node.node_type == NodeType.MODIFIER:
             return self.parent_node.applied_path
         else:
-            ## NEW - START
             ## No need to include the multi-notation container as that would make the modifier also hidden
             new_path = "{parent_path}{sep}%".format(
                 parent_path = self.parent_node.element_path,
                 sep = app.config["i2b2_path_separator"]
                 ).replace("\\\\", "\\").replace("//", "/")
-            ## NEW - END
-            ## OLD - START
-            if self.parent_node.notations and type(self.parent_node.notations) is dict and len(self.parent_node.notations) > 1:
-            # if self.parent_node.child_nodes and len(self.parent_node.child_nodes) > 1:
-                new_path = "{parent_path}{sep}{impc}{sep}%".format(
-                    parent_path = self.parent_node.element_path,
-                    impc = app.config["i2b2_multipath_container"],
-                    sep = app.config["i2b2_path_separator"]
-                    ).replace("\\\\", "\\").replace("//", "/")
-                logger.debug("Adding MULTI to applied_path for {}: {}".format(self.name, new_path))
-            else:
-                new_path = "{parent_path}{sep}%".format(
-                    parent_path = self.parent_node.element_path,
-                    sep = app.config["i2b2_path_separator"]
-                    ).replace("\\\\", "\\").replace("//", "/")
-            ## OLD - END
-
-            ## TODO: For consistency with existing system - START REMOVE
-            if "12645001" in self.concept_long:
-                logger.debug("Parent notations for amplification modifier (12645001): {}".format(self.parent_node.notations))
-            # if (self.parent_node.notations and type(self.parent_node.notations) is dict and len(self.parent_node.notations) > 1) \
-            #     or (self.parent_node.child_nodes and len(self.parent_node.child_nodes) > 1):
-            # if self.parent_node.child_nodes and len(self.parent_node.child_nodes) > 1:
-            #     logger.debug("Adding MULTI to applied_path for {}".format(self.name))
-            #     new_path.replace("\\%", "\\MULTI\\%")
-            ## TODO: For consistency with existing system - END REMOVE
             return new_path
 
     @property
@@ -314,6 +292,7 @@ class MetaNode(object):
     @property
     def display_label(self) -> str:
         """ Get English display_label (or German if no English) """
+        ## TODO: The preferred language should be configurable - so might not be English
         logger.debug("Searching for the right display label for '{}' from dict: {}".format(self.name, self.display_labels))
         if not self.display_labels or len(self.display_labels) == 0:
             # logger.debug("Empty display label")
@@ -336,7 +315,7 @@ class MetaNode(object):
         # logger.debug("Decided on display_label: {}".format(single_label))
         return single_label
     @display_labels.setter
-    def display_labels(self, display_labels):
+    def display_labels(self, display_labels: dict):
         """Simple"""
         self._display_labels = display_labels
         ## Ensure there is not a "None" key
@@ -346,7 +325,8 @@ class MetaNode(object):
     def description(self) -> str:
         """Return the first description as a string"""
         if self.descriptions is None or len(self.descriptions) == 0:
-            return self.pref_label
+            # return self.pref_label
+            return None
         else:
             return next(iter(self.descriptions))
 
@@ -366,11 +346,14 @@ class MetaNode(object):
 
     @property
     def notations(self) -> dict:
-        """Return notation objects or single notation string"""
+        """Return notation objects or single notation dictionary (where the key=notation and value=rdf tag"""
         # logger.debug("Child nodes for '{}': {}".format(self.name, self.child_nodes))
         if self.child_nodes is not None and len(self.child_nodes) != 0 and self._notations is not None and len(self._notations) > 1:
-            ## Create the multi container path if needed (when notations could clash with child nodes)
+        # if self._notations is not None and len(self._notations) > 1:
+            ## Create the multi container path if needed (when notations could clash with child nodes or for VA display purposes)
             dummy_notation = {app.config["i2b2_multipath_container"]: NotationNode(self, None)}
+            # logger.debug("Created dummy notation for multi: {}\nAlso using notations: {}".format(dummy_notation, self._notations))
+            # logger.debug("Because child_nodes: {}\nand notations: {}".format(self.child_nodes, self._notations))
             return {**dummy_notation, **self._notations}
         else:
             return self._notations
@@ -390,7 +373,7 @@ class MetaNode(object):
             ## No notations
             self._notations = None
         elif len(notations) == 1:
-            ## Simple notation
+            ## Simple notation (string based dict)
             self._notations = notations
         else:
             ## Multi notations - NOTE: repeated logic must be matched in NotationNode to calculate the correct path
@@ -423,6 +406,18 @@ class MetaNode(object):
             self._node_type = NodeType.COLLECTION
         else:
             logger.error("Node ({}) must have a type! {}".format(self.name, node_type))
+    
+    @property
+    def has_modifier(self) -> bool:
+        """True if this is a concept where a modifier applies"""
+        if self.node_type != NodeType.CONCEPT:
+            return False
+        if self.parent_node.has_modifier():
+            ## Modifier is always inherited
+            return True
+        else:
+            ## TODO: The root where a modifier is applied...
+            False
 
     @property
     def meta_csv(self) -> dict:
@@ -511,7 +506,10 @@ class MetaNode(object):
         self.child_nodes = list(set(self.child_nodes))
 
     def whole_tree_csv(self, lines:dict = None) -> dict:
-        """dict with 4 lists for each table in: i2b2metadata{table_access,i2b2}, i2b2demodata{concept_dimension,modifier_dimension}"""
+        """dict with 4 lists for each table in: i2b2metadata{table_access,i2b2}, i2b2demodata{concept_dimension,modifier_dimension}
+        
+        Recursive. Call with lines = None (or omit the parameter), its used when getting child nodes
+        """
         logger.info("Adding csv lines for '{}' ({}): {}".format(self.name, self.node_type_pretty, self.node_uri))
         # time.sleep(4)
         if lines is None:
@@ -626,7 +624,7 @@ class NotationNode(object):
     @property
     def element_path(self) -> str:
         """Dynamically calculated
-            - multi container only used if node has children
+            - multi container only used if node has children (should it also be used for multiple notations? Something doesn't work, so maybe!)
             - index only used if node has multiple notations
         """
         # logger.debug("Checking parent node '{}' for element path stem: {}".format(self.containing_node, self.containing_node.element_path))
@@ -635,9 +633,10 @@ class NotationNode(object):
         pnp = self.containing_node.element_path
         notation_path = ""
         if self.notation == "":
+            ## Case for the multi container itself
             notation_path = r"{pnp}{impc}{sep}".format(pnp = pnp, impc = impc, sep = sep)
         elif self.containing_node.child_nodes is None or len(self.containing_node.child_nodes) == 0:
-            ## No multi-path hidden container when there are no child nodes
+            ## No multi-path hidden container when there are no child nodes to clash with
             notation_path = r"{pnp}{sep}{ni}{sep}".format(
                 pnp = pnp,
                 sep = sep,
@@ -650,10 +649,6 @@ class NotationNode(object):
                 impc = impc,
                 ni = list(self.containing_node.notations.values()).index(self) - 1
                 )
-        ## All of these objects are where there are multiple notations, so expect the empty container, all should have an index (included above)
-        # if self.containing_node.notations and len(self.containing_node.notations) > 1:
-        #     notation_path += r"{ni}{sep}".format(sep = sep, ni = list(self.containing_node.notations.values()).index(self))
-        # logger.debug("Calculated notation path for '{}': {}".format(self.notation, notation_path))
         ## Remove duplicate slashes - if they they were at start and end of concatenated strings, then they will be doubled (back-slashes will be escaped too)
         return notation_path.replace("\\\\", "\\").replace("//", "/")
     @property
@@ -677,11 +672,12 @@ class NotationNode(object):
 
     @property
     def display_label(self) -> str:
-        """Let display_label be "MULTI" when this is the container node"""
-        if self.visual_attribute == "MH":
-            return "MULTI"
-        else:
-            return self.containing_node.display_label
+        """Let display_label be "MULTI" when this is the container node (only for consistency with old version?)"""
+        # if self.visual_attribute == "MH":
+        #     # return "MULTI"
+        #     return app.config["i2b2_multipath_container"]
+        # else:
+        return self.containing_node.display_label
     @property
     def concept_long(self) -> str:
         """Concept path"""
