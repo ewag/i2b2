@@ -14,14 +14,14 @@ Tested docker version: 20.10.11
 # Basic usage
 We provide two options for deployment:
 * [Streamlined deployment](#streamlined-deployment) - Which is a purely environment variable based configuration mechanism. This includes setting and passing passwords as envoronment variables from your host to the docker containers
-*  [Advanced 'secret' deployment](#advanced-secret-deployment-alternative) - Which has some security benefits so the secrets cannot be seen from the docker host system. The environment based system still does not expose passwords outside of your server environment, unless you have explicitly configured it to do so.
+*  [Alternative 'secrets' deployment](#alternative-secrets-deployment) - Which has some security benefits so the secrets cannot be seen from the docker host system. The environment based system still does not expose passwords outside of your server environment, unless you have explicitly configured it to do so.
 
 ## Streamlined deployment
 The first step is to copy the essential files from our repo as templates, these will then be edited for you environment (you may prefer to prepare everything on your desktop then copy over to the deployment system)
 ```sh
 wget https://raw.githubusercontent.com/dzl-dm/i2b2/master/docker-compose.yml
-wget https://raw.githubusercontent.com/dzl-dm/i2b2/master/.env
-wget https://raw.githubusercontent.com/dzl-dm/i2b2/master/.env-secrets
+wget https://raw.githubusercontent.com/dzl-dm/i2b2/master/.env.example ./.env
+wget https://raw.githubusercontent.com/dzl-dm/i2b2/master/.env-secrets.example ./.env-secrets
 ```
 > _NOTE:_ If you prefer to build the images yourself (or edit the way they are built), you could clone our whole repo: `git clone https://github.com/dzl-dm/i2b2.git`
 
@@ -32,7 +32,7 @@ docker-compose up -d
 
 We strongly recommend changing the passwords stored in `.env-secrets` before deployment. Additionally, you must [change the user passwords](#change-default-passwords) once the application is running 
 
-## Advanced 'secret' deployment (alternative)
+## Alternative 'secrets' deployment
 The first step is to copy the essential files from our repo as templates, these will then be edited for you environment (you may prefer to prepare everything on your desktop then copy over to the deployment system)
 ```sh
 wget https://raw.githubusercontent.com/dzl-dm/i2b2/master/docker-compose_use-with-secrets.yml ./docker-compose.yml
@@ -72,7 +72,7 @@ export DS_WD_PASS=wd-pass
 ```
 
 ## Adjust your .env
-The directory has a `.env` file which is used by docker to put environment variables into the containers. It also allows the `docker compose` process to use them which can aid deployments. The .env provided covers a range of variables i2b2 can use, most of which will not need changing. For setting up on a remote server, the relevant fields should be changed.
+The directory must have a `.env` file which is used by docker to put environment variables into the containers. You may copy the `.env.example` to get started. It also allows the `docker compose` process to use them which can aid deployments. The .env provided covers a range of variables i2b2 can use, most of which will not need changing. For setting up on a remote server, the relevant fields should be changed.
 
 ## _Optional: Disable components_
 If you do not intend to use a feature beyond the core components, you may disable the them by simply deleting the section from `docker-compose.yml`. See the list below for the names of the relevant sections, when deleting, include all sub-indented lines. If these components are not available, the bootstrap for the core components will gracefully ignore them.

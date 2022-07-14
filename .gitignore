@@ -1,1 +1,5 @@
+## Protect user config from overwriting when pulling from git
 secrets/
+.env
+.env-secrets
+i2b2meta_user_config.yaml

@@ -3,7 +3,6 @@
 ## Dict of acceptable fuseki sources
 fuseki_sources:
   "local-cometar": "http://dwh.proxy/fuseki/cometar_live/query"
-  "DZL": "https://data.dzl.de/fuseki/cometar_live/query"
 
 max_processing_duration: 600 ## seconds
 ## Map short codes to URL's - similar to the definitions in .ttl files, but they are not accessible via fuseki, so must be repeated
