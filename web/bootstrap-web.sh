@@ -26,22 +26,22 @@ file_env() {
   unset "$fileVar"
 }
 
-echo -e "Processing secrets..."
+>&2 echo -e "Processing secrets..."
 if test -f /run/secrets/ENV_MULTILOAD; then
-    echo >&2 -e "Loading ENV_MULTILOAD secrets..."
+    >&2 echo -e "Loading ENV_MULTILOAD secrets..."
     source /run/secrets/ENV_MULTILOAD
 fi
 while read secret_env; do
   secret_var=$(echo ${secret_env} | cut -d= -f 1)
   file_env ${secret_var:0:-5};
 done < <(env | grep '_FILE=')
-echo -e "...complete"
+>&2 echo -e "...complete"
 
 ## Map upstream ENV vars
 export APP_ID=${WEB_FQDN}
 
 ## Customisation
-echo >&2 "Setting custom settings..."
+>&2 echo "Setting custom settings..."
 cd /var/www/html/
 find  . -maxdepth 2 -type f -name i2b2_config_data.js -exec sed -i "s*name: \"HarvardDemo\",*name: \"${ORGANISATION_NAME}\",*g" {} \;
 sed -i 's/allowAnalysis: true,/allowAnalysis: true,\n\t\t  adminOnly: true,/g' admin/i2b2_config_data.js
@@ -51,7 +51,14 @@ if [ ${INCLUDE_DEMO_DATA} != "True" ]; then
 fi
 cd -
 
+if [ ${I2B2_LINK_STATS} == "True" ]; then
+    >&2 echo "Setup rotating stats link because var 'I2B2_LINK_STATS' is ${I2B2_LINK_STATS}..."
+    /usr/sbin/crond
+    cp -a /var/www/html/webclient/default.htm{,.ORIG}
+    cp -dR /stats/* /
+fi
+
 ## Now call the original/upstream entrypoint and append arguments
-echo -e "Starting apache web server..."
+>&2 echo -e "Starting apache web server..."
 /bin/sh /run-httpd.sh
 # exec "$@"

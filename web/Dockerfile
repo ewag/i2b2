@@ -5,6 +5,9 @@ FROM i2b2/i2b2-web:${WEB_TAG}
 ENV TZ=${TZ:-'Europe/Berlin'}
 ENV ORGANISATION_NAME=${ORGANISATION_NAME:-'Local i2b2 data warehouse'}
 ENV INCLUDE_DEMO_DATA=${INCLUDE_DEMO_DATA:-False}
+ENV I2B2_LINK_STATS=${I2B2_LINK_STATS:-False}
+
+RUN yum install -q -y cronie
 
 WORKDIR /docker-entrypoint
 ## Run some generic fixes
@@ -20,6 +23,7 @@ RUN cd /var/www/html/ && \
 
 COPY ./bootstrap-web.sh ./bootstrap.sh
 COPY ./favicon.ico /var/www/html/
+COPY ./stats/ /stats/
 
 ## Override entrypoint for custom initialisation...
 ENTRYPOINT ["/docker-entrypoint/bootstrap.sh"]
