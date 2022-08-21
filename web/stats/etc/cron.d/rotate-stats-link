@@ -1,0 +1,4 @@
+# /etc/cron.d/rotate-stats-link: crontab trigger for key rotation in the optional stats link from i2b2
+
+## Rotate key and link to optional stats page
+39 2 * * *     root    /usr/local/bin/stats-rotate.sh 2>&1 >> /var/log/custom-scripts.log

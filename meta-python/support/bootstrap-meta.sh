@@ -37,8 +37,11 @@ while read secret_env; do
 done < <(env | grep '_FILE=')
 echo -e "...complete"
 
+echo -e "Setting config files from env vars..."
+source /conf.cfg
+sed -i "s#^\(generator\.sparql_endpoint\s*=\s*\).*\$#\1${generator_sparql_endpoint}#" /ontology.properties
+sed -i "s#^\(generator\.output_dir\s*=\s*\).*\$#\1${TEMPDIR}/i2b2-sql/#" /ontology.properties
+mkdir -p "${TEMPDIR}/i2b2-sql/"
 
 ## Now call the original/upstream entrypoint and append arguments
 echo -e "Starting api server..."
-export FLASK_APP="${API_PROD_DIR}/flask/i2b2.py"
-flask run -h 0.0.0.0 --reload

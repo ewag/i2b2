@@ -1,30 +1,33 @@
 version: '3'
 
-# secrets:
-#   POSTGRES_PASSWORD:
-#     file: ./secrets/POSTGRES_PASSWORD.txt
-#   DB_ADMIN_PASS:
-#     file: ./secrets/DB_ADMIN_PASS.txt
-#   DB_USER_PASS:
-#     file: ./secrets/DB_USER_PASS.txt
-#   ENV_MULTILOAD:
-#     file: ./secrets/ENV_MULTILOAD.txt
-
 volumes:
   i2b2-db:
-
-networks:
-  ## If using our proxy, you should use an additional docker network "common-proxy" for them to communicate (see also the commented line in i2b2-web service)
-  # common-proxy:
-  #   external: true
-  backend:
-    external: false
-
+  auth:
+  letsencrypt:
 
 services:
+  i2b2-proxy:
+    container_name:
+      i2b2.proxy
+    image: ${IMAGE_NAMESPACE}/i2b2/i2b2-proxy:${APP_VERSION}
+    # build:
+    #   context: ./proxy
+    #   dockerfile: Dockerfile
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - auth:/etc/nginx/auth
+      - letsencrypt:/etc/letsencrypt
+    env_file:
+      - .env
+    depends_on:
+      - i2b2-web
+
   i2b2-web:
-    container_name: i2b2-web
-    image: ${IMAGE_NAMESPACE}/i2b2/i2b2-web
+    container_name:
+      i2b2.web
+    image: ${IMAGE_NAMESPACE}/i2b2/i2b2-web:${APP_VERSION}
     # build:
     #   context: ./web
     #   dockerfile: Dockerfile
@@ -32,65 +35,73 @@ services:
     #     WEB_TAG: ${WEB_TAG}
     env_file:
       - .env
-    networks:
-      - backend
-      # - common-proxy
-    ## If using a proxy, you should not expose ports, the proxy will do this
-    ports:
-      - 80:80
     depends_on:
       - i2b2-wildfly
 
   i2b2-wildfly:
-    container_name: i2b2-wildfly
-    image: ${IMAGE_NAMESPACE}/i2b2/i2b2-wildfly
+    container_name:
+      i2b2.wildfly
+    image: ${IMAGE_NAMESPACE}/i2b2/i2b2-wildfly:${APP_VERSION}
     # build:
     #   context: ./wildfly
     #   dockerfile: Dockerfile
     #   args:
     #     WILDFLY_TAG: ${WILDFLY_TAG}
     env_file:
-    - .env
-    - .env-secrets
-    networks:
-      - backend
+      - .env
+      - .env-secrets
     depends_on:
-      i2b2-database:
-        condition: service_healthy
-    # secrets:
-    #   - DB_ADMIN_PASS
-    #   - DB_USER_PASS
-    #   - ENV_MULTILOAD
-
-  # i2b2-api:
-  #   container_name: i2b2-api
-  #   image: ${IMAGE_NAMESPACE}/i2b2/i2b2-api
-  #   # build:
-  #   #   context: ./api
-  #   #   dockerfile: Dockerfile
-  #   env_file:
-  #   - .env
-  #   networks:
-  #     - backend
-  #   depends_on:
-  #     i2b2-database:
-  #       condition: service_healthy
+      - i2b2-database
 
   i2b2-database:
-    container_name: i2b2-database
-    image: ${IMAGE_NAMESPACE}/i2b2/i2b2-database
+    container_name:
+      i2b2.database
+    image: ${IMAGE_NAMESPACE}/i2b2/i2b2-database:${APP_VERSION}
     # build:
     #   context: ./database
-    #   dockerfile: Dockerfile.postgres
+    #   dockerfile: Dockerfile
+    ports:
+      - 5432:5432
     volumes:
       - i2b2-db:/var/lib/postgresql/data
     env_file:
-    - .env
-    - .env-secrets
-    networks:
-      - backend
-    # secrets:
-    #   - DB_ADMIN_PASS
-    #   - DB_USER_PASS
-    #   - POSTGRES_PASSWORD
-    #   - ENV_MULTILOAD
+      - .env
+      - .env-secrets
+
+  i2b2-api:
+    container_name:
+      i2b2.api
+    image: ${IMAGE_NAMESPACE}/i2b2/i2b2-api:${APP_VERSION}
+    # build:
+    #   context: ./api
+    #   dockerfile: Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - i2b2-database
+
+  i2b2-meta:
+    container_name:
+      i2b2.meta
+    image: ${IMAGE_NAMESPACE}/i2b2/i2b2-meta:${APP_VERSION}
+    # build:
+    #   context: ./meta-python
+    #   dockerfile: Dockerfile
+    volumes:
+      - ../i2b2-meta-python/custom-metadata:/var/translator-custom-metadata:ro
+      ## Optional: Some settings can be overriden by mounting this file
+      # - ./i2b2meta_user_config.yaml:/config/i2b2meta_user_config.yaml:ro
+    ## Attempt to limit resources - not well implemented for docker compose!
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 200M
+        reservations:
+          cpus: '0.1'
+          memory: 50M
+    env_file:
+      - .env
+      - .env-secrets
+    depends_on:
+      - i2b2-database
